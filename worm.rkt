@@ -1,6 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-beginner-abbr-reader.ss" "lang")((modname worm) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+#reader(lib "htdp-intermediate-reader.ss" "lang")((modname worm) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
 ; Ian Kampine
 ; Form VIIB
 ; CPD II
@@ -30,10 +30,46 @@
 (define WORLD (empty-scene (* GRID-SIZE CELL-DIAMETER) (* GRID-SIZE CELL-DIAMETER)))
 
 
-; MAPPINGS
+; STRUCTURES
 
-; acceptable keystrokes include:
-; up arrow -> makes the worm face upward
-; down arrow -> makes the worm face downward
-; right arrow -> makes the worm face right
-; left arrow -> makes the worm face left
+(define-struct head (posn direction))
+(define-struct food (posn))
+(define-struct world (food head))
+
+
+; DATA DEFINITIONS
+
+; A direction is one of the following
+; - up
+; - right
+; - left
+; - down
+
+
+; FUNCTIONS
+
+; World state -> image
+; renders an image containing the head from a given world state
+; TODO: Render food, render additional segments
+(define (render-world statein)
+  (let
+    ([x (posn-x (head-posn (world-head statein)))]
+     [y (posn-y (head-posn (world-head statein)))])
+    (place-image SEGMENT x y WORLD)))
+
+; World state -> world state
+; moves the worm one cell in the direction it is facing
+(define (move-worm statein)
+  (let*
+      ([x (posn-x (head-posn (world-head statein)))]
+       [y (posn-y (head-posn (world-head statein)))]
+       [worm-dir (head-direction (world-head))])
+    (cond
+      [(string=? worm-dir "up") (make-world (world-food statein)
+                                            (make-head (make-posn x (- y CELL-DIAMETER)) worm-dir))]
+      [(string=? worm-dir "down") (make-world (world-food statein)
+                                              (make-head (make-posn x (+ Y CELL-DIAMETER)) worm-dir))]
+      [(string=? worm-dir "left") (make-world (world-food statein)
+                                              (make-head (make-posn (- x CELL-DIAMETER) y) worm-dir))]
+      [(string=? worm-dir "right") (make-world (world-food statein)
+                                               (make-head (make-posn (+ x CELL-DIAMETER) y) worm-dir))])))
