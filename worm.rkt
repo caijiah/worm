@@ -14,6 +14,7 @@
 (require 2htdp/universe)
 (require 2htdp/image)
 
+;-----------------------------------------------------------------
 
 ; NUMERICAL CONSTANTS
 
@@ -23,6 +24,7 @@
 (define CENTER (/ WORLD-SIZE 2))
 (define TICK-INTERVAL 0.25)
 
+;------------------------------------------------------------------
 
 ; GRAPHICAL CONSTANTS
 
@@ -31,6 +33,7 @@
 (define FOOD (circle (/ CELL-DIAMETER 2) "solid" "green"))
 (define WORLD (empty-scene (* GRID-SIZE CELL-DIAMETER) (* GRID-SIZE CELL-DIAMETER)))
 
+;--------------------------------------------------------------------
 
 ; STRUCTURES
 
@@ -38,11 +41,13 @@
 (define-struct food (posn))
 (define-struct world (food head))
 
+;-------------------------------------------------------------------
 
-; Initial Game State
+; INITIAL GAME STATE
 (define INITIAL-STATE (make-world (make-food (make-posn 20 20))
                                   (make-head (make-posn CENTER CENTER) "down")))
 
+;--------------------------------------------------------------------
 
 ; DATA DEFINITIONS
 
@@ -52,8 +57,10 @@
 ; - left
 ; - down
 
+;--------------------------------------------------------------------
 
 ; FUNCTIONS
+
 
 ; World state -> image
 ; renders an image containing the head from a given world state
@@ -63,6 +70,7 @@
     ([x (posn-x (head-posn (world-head statein)))]
      [y (posn-y (head-posn (world-head statein)))])
     (place-image SEGMENT x y WORLD)))
+
 
 ; World state -> world state
 ; moves the worm one cell in the direction it is facing
@@ -80,6 +88,7 @@
                                               (make-head (make-posn (- x CELL-DIAMETER) y) worm-dir))]
       [(string=? worm-dir "right") (make-world (world-food statein)
                                                (make-head (make-posn (+ x CELL-DIAMETER) y) worm-dir))])))
+
 
 ; World state -> world state
 ; Determines what key has been pressed and changes the worm's direction accordingly.
@@ -99,6 +108,7 @@
                                       (make-head (make-posn x y) "left"))]
       [else statein])))
 
+
 ; World state -> world state
 ; Determines whether the worm has collided with the walls of the environment
 (define (check-collision statein)
@@ -111,6 +121,7 @@
       [(> y WORLD-SIZE) true]
       [(< y 0) true]
       [else false])))
+
 
 ; Create the world
 (big-bang INITIAL-STATE
