@@ -129,3 +129,9 @@
           (on-key check-keys)
           (to-draw render-world)
           (stop-when check-collision))
+
+
+; TO DO
+; IMPLEMENT MULTIPLE SEGMENTS
+; WORK ON RENDERING THEM
+; WORK ON MOVING THEM (LIST APPROACH THAT MR. GRAHAM SUGGESTED)
