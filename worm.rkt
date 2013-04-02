@@ -17,16 +17,18 @@
 
 ; NUMERICAL CONSTANTS
 
-(define GRID-SIZE 10)
-(define CELL-DIAMETER 10)
+(define GRID-SIZE 20)
+(define CELL-DIAMETER 40)
 (define WORLD-SIZE (* GRID-SIZE CELL-DIAMETER))
+(define CENTER (/ WORLD-SIZE 2))
+(define TICK-INTERVAL 0.25)
 
 
 ; GRAPHICAL CONSTANTS
 
 ; (define HEAD (circle CELL-DIAMETER "solid" "pink")) <--- work out more advanced render system for later
-(define SEGMENT (circle CELL-DIAMETER "solid" "red"))
-(define FOOD (circle CELL-DIAMETER "solid" "green"))
+(define SEGMENT (circle (/ CELL-DIAMETER 2) "solid" "red"))
+(define FOOD (circle (/ CELL-DIAMETER 2) "solid" "green"))
 (define WORLD (empty-scene (* GRID-SIZE CELL-DIAMETER) (* GRID-SIZE CELL-DIAMETER)))
 
 
@@ -35,6 +37,11 @@
 (define-struct head (posn direction))
 (define-struct food (posn))
 (define-struct world (food head))
+
+
+; Initial Game State
+(define INITIAL-STATE (make-world (make-food (make-posn 20 20))
+                                  (make-head (make-posn CENTER CENTER) "down")))
 
 
 ; DATA DEFINITIONS
@@ -63,13 +70,51 @@
   (let*
       ([x (posn-x (head-posn (world-head statein)))]
        [y (posn-y (head-posn (world-head statein)))]
-       [worm-dir (head-direction (world-head))])
+       [worm-dir (head-direction (world-head statein))])
     (cond
       [(string=? worm-dir "up") (make-world (world-food statein)
                                             (make-head (make-posn x (- y CELL-DIAMETER)) worm-dir))]
       [(string=? worm-dir "down") (make-world (world-food statein)
-                                              (make-head (make-posn x (+ Y CELL-DIAMETER)) worm-dir))]
+                                              (make-head (make-posn x (+ y CELL-DIAMETER)) worm-dir))]
       [(string=? worm-dir "left") (make-world (world-food statein)
                                               (make-head (make-posn (- x CELL-DIAMETER) y) worm-dir))]
       [(string=? worm-dir "right") (make-world (world-food statein)
                                                (make-head (make-posn (+ x CELL-DIAMETER) y) worm-dir))])))
+
+; World state -> world state
+; Determines what key has been pressed and changes the worm's direction accordingly.
+(define (check-keys statein key)
+  (let*
+      ([x (posn-x (head-posn (world-head statein)))]
+       [y (posn-y (head-posn (world-head statein)))]
+       [foodin (world-food statein)])
+    (cond
+      [(key=? key "up") (make-world foodin
+                                    (make-head (make-posn x y) "up"))]
+      [(key=? key "down") (make-world foodin
+                                      (make-head (make-posn x y) "down"))]
+      [(key=? key "right") (make-world foodin
+                                       (make-head (make-posn x y) "right"))]
+      [(key=? key "left") (make-world foodin
+                                      (make-head (make-posn x y) "left"))]
+      [else statein])))
+
+; World state -> world state
+; Determines whether the worm has collided with the walls of the environment
+(define (check-collision statein)
+  (let*
+      ([x (posn-x (head-posn (world-head statein)))]
+       [y (posn-y (head-posn (world-head statein)))])
+    (cond
+      [(> x WORLD-SIZE) true]
+      [(< x 0) true]
+      [(> y WORLD-SIZE) true]
+      [(< y 0) true]
+      [else false])))
+
+; Create the world
+(big-bang INITIAL-STATE
+          (on-tick move-worm TICK-INTERVAL)
+          (on-key check-keys)
+          (to-draw render-world)
+          (stop-when check-collision))
