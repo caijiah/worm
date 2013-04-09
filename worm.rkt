@@ -37,15 +37,21 @@
 
 ; STRUCTURES
 
-(define-struct head (posn direction))
+(define-struct segment (posn direction))
 (define-struct food (posn))
-(define-struct world (food head))
+(define-struct world (food worm))
 
 ;-------------------------------------------------------------------
 
 ; INITIAL GAME STATE
 (define INITIAL-STATE (make-world (make-food (make-posn 20 20))
-                                  (make-head (make-posn CENTER CENTER) "down")))
+                                  (list (make-segment (make-posn CENTER CENTER) "down"))))
+
+; TEST GAME STATES
+(define TEST-STATE-1 (make-world (make-food (make-posn 20 20)) 
+                                               (list (make-segment (make-posn CENTER CENTER) "down") 
+                                                     (make-segment (make-posn CENTER (+ CELL-DIAMETER CENTER)) "down")
+                                                     (make-segment (make-posn CENTER (+ (* CELL-DIAMETER 2) CENTER)) "down"))))
 
 ;--------------------------------------------------------------------
 
@@ -57,81 +63,105 @@
 ; - left
 ; - down
 
+; A worm is one of the following:
+; - (cons segment empty)
+; - (cons segment worm)
+
 ;--------------------------------------------------------------------
 
 ; FUNCTIONS
 
 
-; World state -> image
-; renders an image containing the head from a given world state
-; TODO: Render food, render additional segments
-(define (render-world statein)
+; segment, image -> image
+; renders an image containing the segment from a given segment and the
+; rendered world image
+; TODO: Render food
+(define (render-segment segin worldin)
   (let
-    ([x (posn-x (head-posn (world-head statein)))]
-     [y (posn-y (head-posn (world-head statein)))])
-    (place-image SEGMENT x y WORLD)))
+    ([x (posn-x (segment-posn segin))]
+     [y (posn-y (segment-posn segin))])
+    (place-image SEGMENT x y worldin)))
 
+
+; worm -> image
+; renders a world containing the worm from a given worm
+(define (render-worm wormin)
+    (cond
+      [(empty? (rest wormin)) (render-segment (first wormin) WORLD)]
+      [else (render-segment (first wormin)
+                            (render-worm (rest wormin)))]))
+
+
+; world state -> image
+; renders the whole world from a given world state
+(define (render-world worldin)
+  (let*
+      ([worm (world-worm worldin)]
+       [food (world-food worldin)])
+    (render-worm worm)))
 
 ; World state -> world state
 ; moves the worm one cell in the direction it is facing
-(define (move-worm statein)
-  (let*
-      ([x (posn-x (head-posn (world-head statein)))]
-       [y (posn-y (head-posn (world-head statein)))]
-       [worm-dir (head-direction (world-head statein))])
-    (cond
-      [(string=? worm-dir "up") (make-world (world-food statein)
-                                            (make-head (make-posn x (- y CELL-DIAMETER)) worm-dir))]
-      [(string=? worm-dir "down") (make-world (world-food statein)
-                                              (make-head (make-posn x (+ y CELL-DIAMETER)) worm-dir))]
-      [(string=? worm-dir "left") (make-world (world-food statein)
-                                              (make-head (make-posn (- x CELL-DIAMETER) y) worm-dir))]
-      [(string=? worm-dir "right") (make-world (world-food statein)
-                                               (make-head (make-posn (+ x CELL-DIAMETER) y) worm-dir))])))
+;(define (move-worm statein)
+;  (let*
+;      ([x (posn-x (head-posn (world-head statein)))]
+;       [y (posn-y (head-posn (world-head statein)))]
+;       [worm-dir (head-direction (world-head statein))])
+;    (cond
+;      [(string=? worm-dir "up") (make-world (world-food statein)
+;                                            (make-head (make-posn x (- y CELL-DIAMETER)) worm-dir))]
+;      [(string=? worm-dir "down") (make-world (world-food statein)
+;                                              (make-head (make-posn x (+ y CELL-DIAMETER)) worm-dir))]
+;      [(string=? worm-dir "left") (make-world (world-food statein)
+;                                              (make-head (make-posn (- x CELL-DIAMETER) y) worm-dir))]
+;      [(string=? worm-dir "right") (make-world (world-food statein)
+;                                               (make-head (make-posn (+ x CELL-DIAMETER) y) worm-dir))])))
 
 
 ; World state -> world state
 ; Determines what key has been pressed and changes the worm's direction accordingly.
-(define (check-keys statein key)
-  (let*
-      ([x (posn-x (head-posn (world-head statein)))]
-       [y (posn-y (head-posn (world-head statein)))]
-       [foodin (world-food statein)])
-    (cond
-      [(key=? key "up") (make-world foodin
-                                    (make-head (make-posn x y) "up"))]
-      [(key=? key "down") (make-world foodin
-                                      (make-head (make-posn x y) "down"))]
-      [(key=? key "right") (make-world foodin
-                                       (make-head (make-posn x y) "right"))]
-      [(key=? key "left") (make-world foodin
-                                      (make-head (make-posn x y) "left"))]
-      [else statein])))
+;(define (check-keys statein key)
+;  (let*
+;      ([x (posn-x (head-posn (world-head statein)))]
+;       [y (posn-y (head-posn (world-head statein)))]
+;       [foodin (world-food statein)])
+;    (cond
+;      [(key=? key "up") (make-world foodin
+;                                    (make-head (make-posn x y) "up"))]
+;      [(key=? key "down") (make-world foodin
+;                                      (make-head (make-posn x y) "down"))]
+;      [(key=? key "right") (make-world foodin
+;                                       (make-head (make-posn x y) "right"))]
+;      [(key=? key "left") (make-world foodin
+;                                      (make-head (make-posn x y) "left"))]
+;      [else statein])))
 
 
 ; World state -> world state
 ; Determines whether the worm has collided with the walls of the environment
-(define (check-collision statein)
-  (let*
-      ([x (posn-x (head-posn (world-head statein)))]
-       [y (posn-y (head-posn (world-head statein)))])
-    (cond
-      [(> x WORLD-SIZE) true]
-      [(< x 0) true]
-      [(> y WORLD-SIZE) true]
-      [(< y 0) true]
-      [else false])))
+;(define (check-collision statein)
+;  (let*
+;      ([x (posn-x (head-posn (world-head statein)))]
+;       [y (posn-y (head-posn (world-head statein)))])
+;    (cond
+;      [(> x WORLD-SIZE) true]
+;      [(< x 0) true]
+;      [(> y WORLD-SIZE) true]
+;      [(< y 0) true]
+;      [else false])))
 
 
 ; Create the world
-(big-bang INITIAL-STATE
-          (on-tick move-worm TICK-INTERVAL)
-          (on-key check-keys)
-          (to-draw render-world)
-          (stop-when check-collision))
+;(big-bang INITIAL-STATE
+;          (on-tick move-worm TICK-INTERVAL)
+;          (on-key check-keys)
+;          (to-draw render-world)
+;          (stop-when check-collision))
 
 
-; TO DO
-; IMPLEMENT MULTIPLE SEGMENTS
-; WORK ON RENDERING THEM
-; WORK ON MOVING THEM (LIST APPROACH THAT MR. GRAHAM SUGGESTED)
+; TO DO (IN THIS ORDER)
+; GET MULTIPLE SEGMENT MOVING WORKING
+; GET MULTIPLE SEGMENT STEERING WORKING
+; GET COLLISION DETECTION WORKING
+; GET ϟƘƦƖןןΣ✘
+; ALSO USE GITHUB SO YOU DON'T END UP REDOING EVERYTHING AGAIN
