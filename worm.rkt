@@ -100,22 +100,41 @@
        [food (world-food worldin)])
     (render-worm worm)))
 
-; World state -> world state
-; moves the worm one cell in the direction it is facing
-;(define (move-worm statein)
-;  (let*
-;      ([x (posn-x (head-posn (world-head statein)))]
-;       [y (posn-y (head-posn (world-head statein)))]
-;       [worm-dir (head-direction (world-head statein))])
-;    (cond
-;      [(string=? worm-dir "up") (make-world (world-food statein)
-;                                            (make-head (make-posn x (- y CELL-DIAMETER)) worm-dir))]
-;      [(string=? worm-dir "down") (make-world (world-food statein)
-;                                              (make-head (make-posn x (+ y CELL-DIAMETER)) worm-dir))]
-;      [(string=? worm-dir "left") (make-world (world-food statein)
-;                                              (make-head (make-posn (- x CELL-DIAMETER) y) worm-dir))]
-;      [(string=? worm-dir "right") (make-world (world-food statein)
-;                                               (make-head (make-posn (+ x CELL-DIAMETER) y) worm-dir))])))
+
+; worm -> worm
+; Returns a worm without the last segment
+(define (worm-ebl wormin)
+  (cond
+    [(empty? (rest wormin)) empty]
+    [else (cons (first wormin) (worm-ebl (rest wormin)))]))
+
+
+; worm -> segment
+; Returns the last segment of a worm
+(define (worm-last wormin)
+  (cond
+    [(empty? (rest wormin)) wormin]
+    [else (worm-last (rest wormin))]))
+
+
+; worm -> worm
+; shuffles the worm's last segment to the front
+;(define (move-worm wormin)
+;  (mo
+    
+
+; segment -> segment
+; updates the lead segment's position
+(define (update-segment segin)
+  (let*
+      ([x (posn-x (segment-posn segin))]
+       [y (posn-y (segment-posn segin))]
+       [segment-dir (segment-direction segin)])
+    (cond
+      [(string=? segment-dir "up") (make-segment segment-dir (make-posn x (- y CELL-DIAMETER)))]
+      [(string=? segment-dir "down") (make-segment segment-dir (make-posn x (+ y CELL-DIAMETER)))]
+      [(string=? segment-dir "left") (make-segment segment-dir (make-posn (- x CELL-DIAMETER) y))]
+      [(string=? segment-dir "right") (make-segment segment-dir (make-posn (+ x CELL-DIAMETER) y))])))
 
 
 ; World state -> world state
