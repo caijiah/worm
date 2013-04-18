@@ -105,6 +105,7 @@
 ; Returns a worm without the last segment
 (define (worm-ebl wormin)
   (cond
+    [(empty? wormin) empty]
     [(empty? (rest wormin)) empty]
     [else (cons (first wormin) (worm-ebl (rest wormin)))]))
 
@@ -118,14 +119,29 @@
 
 
 ; worm -> worm
-; shuffles the worm's last segment to the front
-;(define (move-worm wormin)
-;  (mo
-    
+; update's the worm's position within the world
+(define (update-worm wormin)
+  (cond
+    [(empty? (rest wormin)) (list (update-head (first wormin)))] 
+    [else (let*
+      ([worm-head (first wormin)]
+       [worm-tail (rest wormin)]
+       [worm-middle (worm-ebl worm-tail)])
+            (cons (update-head worm-head) worm-middle))]))
+  
+
+; world -> world
+; update the world
+(define (update-world worldin)
+  (let*
+    ([worm (world-worm worldin)]
+     [food (world-food worldin)])
+  (make-world food (update-worm worm))))
+
 
 ; segment -> segment
-; updates the lead segment's position
-(define (update-segment segin)
+; updates the head segment's position
+(define (update-head segin)
   (let*
       ([x (posn-x (segment-posn segin))]
        [y (posn-y (segment-posn segin))]
@@ -171,10 +187,10 @@
 
 
 ; Create the world
-;(big-bang INITIAL-STATE
-;          (on-tick move-worm TICK-INTERVAL)
+(big-bang INITIAL-STATE
+          (on-tick update-world TICK-INTERVAL)
 ;          (on-key check-keys)
-;          (to-draw render-world)
+          (to-draw render-world))
 ;          (stop-when check-collision))
 
 
