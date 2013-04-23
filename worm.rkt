@@ -158,21 +158,20 @@
 
 ; World state -> world state
 ; Determines what key has been pressed and changes the worm's direction accordingly.
-;(define (check-keys statein key)
-;  (let*
-;      ([x (posn-x (head-posn (world-head statein)))]
-;       [y (posn-y (head-posn (world-head statein)))]
-;       [foodin (world-food statein)])
-;    (cond
-;      [(key=? key "up") (make-world foodin
-;                                    (make-head (make-posn x y) "up"))]
-;      [(key=? key "down") (make-world foodin
-;                                      (make-head (make-posn x y) "down"))]
-;      [(key=? key "right") (make-world foodin
-;                                       (make-head (make-posn x y) "right"))]
-;      [(key=? key "left") (make-world foodin
-;                                      (make-head (make-posn x y) "left"))]
-;      [else statein])))
+(define (check-keys statein key)
+  (let*
+      ([head-posn (segment-posn (first (world-worm statein))))]
+       [food (world-food statein)])
+    (cond
+      [(key=? key "up") (make-world food
+                                    (make-segment head-posn "up"))]
+      [(key=? key "down") (make-world food
+                                      (make-segment head-posn "down"))]
+      [(key=? key "right") (make-world food
+                                       (make-segment head-posn "right"))]
+      [(key=? key "left") (make-world food
+                                      (make-segment head-posn "left"))]
+      [else statein])))
 
 
 ; World state -> world state
