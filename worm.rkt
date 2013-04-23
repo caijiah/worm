@@ -101,13 +101,13 @@
     (render-worm worm)))
 
 
-; worm -> worm
-; Returns a worm without the last segment
+; list -> list
+; Returns a list without the last element
 (define (worm-ebl wormin)
-  (cond
-    [(empty? wormin) empty]
-    [(empty? (rest wormin)) empty]
-    [else (cons (first wormin) (worm-ebl (rest wormin)))]))
+  (reverse (rest (reverse wormin))))
+
+; testing worm-ebl
+(check-expect (worm-ebl (list 1 2 3 4)) (list 1 2 3))
 
 
 ; worm -> segment
@@ -147,10 +147,10 @@
        [y (posn-y (segment-posn segin))]
        [segment-dir (segment-direction segin)])
     (cond
-      [(string=? segment-dir "up") (make-segment segment-dir (make-posn x (- y CELL-DIAMETER)))]
-      [(string=? segment-dir "down") (make-segment segment-dir (make-posn x (+ y CELL-DIAMETER)))]
-      [(string=? segment-dir "left") (make-segment segment-dir (make-posn (- x CELL-DIAMETER) y))]
-      [(string=? segment-dir "right") (make-segment segment-dir (make-posn (+ x CELL-DIAMETER) y))])))
+      [(string=? segment-dir "up") (make-segment (make-posn x (- y CELL-DIAMETER)) segment-dir)]
+      [(string=? segment-dir "down") (make-segment (make-posn x (+ y CELL-DIAMETER)) segment-dir)]
+      [(string=? segment-dir "left") (make-segment (make-posn (- x CELL-DIAMETER) y) segment-dir)]
+      [(string=? segment-dir "right") (make-segment (make-posn (+ x CELL-DIAMETER) y) segment-dir)])))
 
 
 ; World state -> world state
@@ -187,7 +187,7 @@
 
 
 ; Create the world
-(big-bang INITIAL-STATE
+(big-bang TEST-STATE-1
           (on-tick update-world TICK-INTERVAL)
 ;          (on-key check-keys)
           (to-draw render-world))
