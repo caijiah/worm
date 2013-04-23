@@ -22,7 +22,7 @@
 (define CELL-DIAMETER 40)
 (define WORLD-SIZE (* GRID-SIZE CELL-DIAMETER))
 (define CENTER (/ WORLD-SIZE 2))
-(define TICK-INTERVAL 0.25)
+(define TICK-INTERVAL 1)
 
 ;------------------------------------------------------------------
 
@@ -50,8 +50,9 @@
 ; TEST GAME STATES
 (define TEST-STATE-1 (make-world (make-food (make-posn 20 20)) 
                                                (list (make-segment (make-posn CENTER CENTER) "down") 
-                                                     (make-segment (make-posn CENTER (+ CELL-DIAMETER CENTER)) "down")
-                                                     (make-segment (make-posn CENTER (+ (* CELL-DIAMETER 2) CENTER)) "down"))))
+                                                     (make-segment (make-posn CENTER (- CENTER CELL-DIAMETER)) "down")
+                                                     (make-segment (make-posn CENTER (- CENTER (* CELL-DIAMETER 2))) "down")
+                                                     (make-segment (make-posn CENTER (- CENTER (* CELL-DIAMETER 3))) "down"))))
 
 ;--------------------------------------------------------------------
 
@@ -110,24 +111,26 @@
 (check-expect (worm-ebl (list 1 2 3 4)) (list 1 2 3))
 
 
-; worm -> segment
-; Returns the last segment of a worm
+; list -> list
+; Returns the last element of a list
 (define (worm-last wormin)
   (cond
     [(empty? (rest wormin)) wormin]
     [else (worm-last (rest wormin))]))
+
+; testing worm-last
+(check-expect (worm-last (list 1 2 3 4)) (list 4))
 
 
 ; worm -> worm
 ; update's the worm's position within the world
 (define (update-worm wormin)
   (cond
-    [(empty? (rest wormin)) (list (update-head (first wormin)))] 
+    [(<= (length wormin) 1) (list (update-head (first wormin)))] 
     [else (let*
       ([worm-head (first wormin)]
-       [worm-tail (rest wormin)]
-       [worm-middle (worm-ebl worm-tail)])
-            (cons (update-head worm-head) worm-middle))]))
+       [worm-tail (worm-ebl wormin)])
+            (cons (update-head worm-head) worm-tail))]))
   
 
 ; world -> world
@@ -195,7 +198,6 @@
 
 
 ; TO DO (IN THIS ORDER)
-; GET MULTIPLE SEGMENT MOVING WORKING
 ; GET MULTIPLE SEGMENT STEERING WORKING
 ; GET COLLISION DETECTION WORKING
 ; GET ϟƘƦƖןןΣ✘
