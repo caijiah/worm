@@ -171,12 +171,12 @@
       [else statein])))
 
 
-; World state -> world state
+; worm -> boolean
 ; Determines whether the worm has collided with the walls of the environment
-(define (check-wall-collision statein)
+(define (check-wall-collision wormin)
   (let*
-      ([x (posn-x (segment-posn (first (world-worm statein))))]
-       [y (posn-y (segment-posn (first (world-worm statein))))])
+      ([x (posn-x (segment-posn (first wormin)))]
+       [y (posn-y (segment-posn (first wormin)))])
     (cond
       [(>= x WORLD-SIZE) true]
       [(<= x 0) true]
@@ -209,7 +209,14 @@
 (check-expect (check-segment-posn (make-segment (make-posn 10 10) "up") 10 10) true)
 (check-expect (check-segment-posn (make-segment (make-posn 10 11) "up") 10 10) false)
 
+; world state -> world state
+; checks if the worm has collided with the walls of the environment or itself
+(define (check-all-collisions statein)
+  (let*
+      
 
+      
+      
 ; Create the world
 (big-bang TEST-STATE-1
           (on-tick update-world TICK-INTERVAL)
