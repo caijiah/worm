@@ -22,7 +22,7 @@
 (define CELL-DIAMETER 40)
 (define WORLD-SIZE (* GRID-SIZE CELL-DIAMETER))
 (define CENTER (/ WORLD-SIZE 2))
-(define TICK-INTERVAL 1)
+(define TICK-INTERVAL 0.6)
 
 ;------------------------------------------------------------------
 
@@ -156,21 +156,18 @@
       [(string=? segment-dir "right") (make-segment (make-posn (+ x CELL-DIAMETER) y) segment-dir)])))
 
 
-; World state -> world state
+; World -> world
 ; Determines what key has been pressed and changes the worm's direction accordingly.
 (define (check-keys statein key)
   (let*
-      ([head-posn (segment-posn (first (world-worm statein))))]
-       [food (world-food statein)])
+      ([head-posn (segment-posn (first (world-worm statein)))]
+       [food (world-food statein)]
+       [worm-tail (rest (world-worm statein))])
     (cond
-      [(key=? key "up") (make-world food
-                                    (make-segment head-posn "up"))]
-      [(key=? key "down") (make-world food
-                                      (make-segment head-posn "down"))]
-      [(key=? key "right") (make-world food
-                                       (make-segment head-posn "right"))]
-      [(key=? key "left") (make-world food
-                                      (make-segment head-posn "left"))]
+      [(key=? key "up") (make-world food (cons (make-segment head-posn "up") worm-tail))]
+      [(key=? key "down") (make-world food (cons (make-segment head-posn "down") worm-tail))]
+      [(key=? key "right") (make-world food (cons (make-segment head-posn "right") worm-tail))]
+      [(key=? key "left") (make-world food (cons (make-segment head-posn "left") worm-tail))]
       [else statein])))
 
 
@@ -189,15 +186,14 @@
 
 
 ; Create the world
-(big-bang TEST-STATE-1
+(big-bang INITIAL-STATE
           (on-tick update-world TICK-INTERVAL)
-;          (on-key check-keys)
+          (on-key check-keys)
           (to-draw render-world))
 ;          (stop-when check-collision))
 
 
 ; TO DO (IN THIS ORDER)
-; GET MULTIPLE SEGMENT STEERING WORKING
 ; GET COLLISION DETECTION WORKING
 ; GET ϟƘƦƖןןΣ✘
 ; ALSO USE GITHUB SO YOU DON'T END UP REDOING EVERYTHING AGAIN
