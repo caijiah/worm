@@ -173,24 +173,49 @@
 
 ; World state -> world state
 ; Determines whether the worm has collided with the walls of the environment
-;(define (check-collision statein)
-;  (let*
-;      ([x (posn-x (head-posn (world-head statein)))]
-;       [y (posn-y (head-posn (world-head statein)))])
-;    (cond
-;      [(> x WORLD-SIZE) true]
-;      [(< x 0) true]
-;      [(> y WORLD-SIZE) true]
-;      [(< y 0) true]
-;      [else false])))
+(define (check-wall-collision statein)
+  (let*
+      ([x (posn-x (segment-posn (first (world-worm statein))))]
+       [y (posn-y (segment-posn (first (world-worm statein))))])
+    (cond
+      [(>= x WORLD-SIZE) true]
+      [(<= x 0) true]
+      [(>= y WORLD-SIZE) true]
+      [(<= y 0) true]
+      [else false])))
+
+
+; segment, worm -> boolean
+; determines whether the segment is in the same location as any of the worm's other segments
+(define (check-segment-posn* segin wormin)
+  (let*
+      ([seg-x (posn-x (segment-posn segin))]
+       [seg-y (posn-y (segment-posn segin))])
+    (cond
+      [(check-segment-posn (first wormin) seg-x seg-y) true]
+      [(empty? wormin) false]
+      [else (check-segment-posn* segin (rest wormin))])))
+
+    
+; segment, integer, integer -> boolean
+; determines whether the segment is at the designated location
+(define (check-segment-posn segin x y)
+  (let*
+      ([seg-x (posn-x (segment-posn segin))]
+       [seg-y (posn-y (segment-posn segin))])
+    (and (= seg-x x) (= seg-y y))))
+
+; testing check-segment-pos
+(check-expect (check-segment-posn (make-segment (make-posn 10 10) "up") 10 10) true)
+(check-expect (check-segment-posn (make-segment (make-posn 10 11) "up") 10 10) false)
 
 
 ; Create the world
-(big-bang INITIAL-STATE
+(big-bang TEST-STATE-1
           (on-tick update-world TICK-INTERVAL)
           (on-key check-keys)
-          (to-draw render-world))
-;          (stop-when check-collision))
+          (to-draw render-world)
+          (stop-when check-wall-collision))
 
 
 ; TO DO (IN THIS ORDER)
