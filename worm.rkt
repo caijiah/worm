@@ -22,7 +22,7 @@
 (define CELL-DIAMETER 40)
 (define WORLD-SIZE (* GRID-SIZE CELL-DIAMETER))
 (define CENTER (/ WORLD-SIZE 2))
-(define TICK-INTERVAL 0.3)
+(define TICK-INTERVAL 0.2)
 
 ;------------------------------------------------------------------
 
@@ -214,6 +214,21 @@
 (check-expect (check-segment-posn (make-segment (make-posn 10 10) "up") 10 10) true)
 (check-expect (check-segment-posn (make-segment (make-posn 10 11) "up") 10 10) false)
   
+
+; Posn -> Posn
+; Given a position, it generates a random, different position. 
+(define (food-create p)
+  (food-check-create p (make-posn (* (random GRID-SIZE) CELL-DIAMETER) 
+                                  (* (random GRID-SIZE) CELL-DIAMETER))))
+ 
+
+; Posn Posn -> Posn
+; Determines whether the old position is equal to the
+; new (candidate) position. If the old position is equal 
+; to the new position, generate a new one. Otherwise, return the candidate position.
+(define (food-check-create p candidate)
+  (if (equal? p candidate) (food-create p) candidate))
+
       
 ; Create the world
 (big-bang TEST-STATE-1
