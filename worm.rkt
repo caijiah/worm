@@ -22,7 +22,7 @@
 (define CELL-DIAMETER 40)
 (define WORLD-SIZE (* GRID-SIZE CELL-DIAMETER))
 (define CENTER (/ WORLD-SIZE 2))
-(define TICK-INTERVAL 0.6)
+(define TICK-INTERVAL 0.3)
 
 ;------------------------------------------------------------------
 
@@ -52,7 +52,9 @@
                                                (list (make-segment (make-posn CENTER CENTER) "down") 
                                                      (make-segment (make-posn CENTER (- CENTER CELL-DIAMETER)) "down")
                                                      (make-segment (make-posn CENTER (- CENTER (* CELL-DIAMETER 2))) "down")
-                                                     (make-segment (make-posn CENTER (- CENTER (* CELL-DIAMETER 3))) "down"))))
+                                                     (make-segment (make-posn CENTER (- CENTER (* CELL-DIAMETER 3))) "down")
+                                                     (make-segment (make-posn CENTER (- CENTER (* CELL-DIAMETER 4))) "down")
+                                                     (make-segment (make-posn CENTER (- CENTER (* CELL-DIAMETER 5))) "down"))))
 
 ;--------------------------------------------------------------------
 
@@ -158,31 +160,34 @@
 
 ; World -> world
 ; Determines what key has been pressed and changes the worm's direction accordingly.
-(define (check-keys statein key)
+(define (check-keys worldin key)
   (let*
-      ([head-posn (segment-posn (first (world-worm statein)))]
-       [food (world-food statein)]
-       [worm-tail (rest (world-worm statein))])
+      ([head-posn (segment-posn (first (world-worm worldin)))]
+       [food (world-food worldin)]
+       [worm-tail (rest (world-worm worldin))])
     (cond
       [(key=? key "up") (make-world food (cons (make-segment head-posn "up") worm-tail))]
       [(key=? key "down") (make-world food (cons (make-segment head-posn "down") worm-tail))]
       [(key=? key "right") (make-world food (cons (make-segment head-posn "right") worm-tail))]
       [(key=? key "left") (make-world food (cons (make-segment head-posn "left") worm-tail))]
-      [else statein])))
+      [else worldin])))
 
 
-; worm -> boolean
-; Determines whether the worm has collided with the walls of the environment
-(define (check-wall-collision wormin)
+; world state -> boolean
+; Determines whether the worm has collided with the walls of the environment or itself
+(define (check-all-collisions gamein)
   (let*
-      ([x (posn-x (segment-posn (first wormin)))]
-       [y (posn-y (segment-posn (first wormin)))])
+      ([worm (world-worm gamein)]
+       [worm-head (first worm)]
+       [worm-tail (rest worm)]
+       [x (posn-x (segment-posn (first worm)))]
+       [y (posn-y (segment-posn (first worm)))])
     (cond
       [(>= x WORLD-SIZE) true]
       [(<= x 0) true]
       [(>= y WORLD-SIZE) true]
       [(<= y 0) true]
-      [else false])))
+      [else (check-segment-posn* worm-head worm-tail)])))
 
 
 ; segment, worm -> boolean
@@ -192,37 +197,30 @@
       ([seg-x (posn-x (segment-posn segin))]
        [seg-y (posn-y (segment-posn segin))])
     (cond
-      [(check-segment-posn (first wormin) seg-x seg-y) true]
       [(empty? wormin) false]
+      [(check-segment-posn (first wormin) seg-x seg-y) true]
       [else (check-segment-posn* segin (rest wormin))])))
 
     
 ; segment, integer, integer -> boolean
 ; determines whether the segment is at the designated location
-(define (check-segment-posn segin x y)
+(define (check-segment-posn segin xin yin)
   (let*
       ([seg-x (posn-x (segment-posn segin))]
        [seg-y (posn-y (segment-posn segin))])
-    (and (= seg-x x) (= seg-y y))))
+    (and (= seg-x xin) (= seg-y yin))))
 
 ; testing check-segment-pos
 (check-expect (check-segment-posn (make-segment (make-posn 10 10) "up") 10 10) true)
 (check-expect (check-segment-posn (make-segment (make-posn 10 11) "up") 10 10) false)
-
-; world state -> world state
-; checks if the worm has collided with the walls of the environment or itself
-(define (check-all-collisions statein)
-  (let*
-      
-
-      
+  
       
 ; Create the world
 (big-bang TEST-STATE-1
           (on-tick update-world TICK-INTERVAL)
           (on-key check-keys)
           (to-draw render-world)
-          (stop-when check-wall-collision))
+          (stop-when check-all-collisions))
 
 
 ; TO DO (IN THIS ORDER)
