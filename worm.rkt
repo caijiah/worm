@@ -48,7 +48,7 @@
                                   (list (make-segment (make-posn CENTER CENTER) "down"))))
 
 ; TEST GAME STATES
-(define TEST-STATE-1 (make-world (make-food (make-posn 20 20)) 
+(define TEST-STATE-1 (make-world (make-food (make-posn 120 120)) 
                                                (list (make-segment (make-posn CENTER CENTER) "down") 
                                                      (make-segment (make-posn CENTER (- CENTER CELL-DIAMETER)) "down")
                                                      (make-segment (make-posn CENTER (- CENTER (* CELL-DIAMETER 2))) "down")
@@ -78,12 +78,11 @@
 ; segment, image -> image
 ; renders an image containing the segment from a given segment and the
 ; rendered world image
-; TODO: Render food
-(define (render-segment segin worldin)
+(define (render-segment segin imgin)
   (let
     ([x (posn-x (segment-posn segin))]
      [y (posn-y (segment-posn segin))])
-    (place-image SEGMENT x y worldin)))
+    (place-image SEGMENT x y imgin)))
 
 
 ; worm -> image
@@ -95,13 +94,22 @@
                             (render-worm (rest wormin)))]))
 
 
+; food, image -> image
+; renders a world containing the food from a world state and an image
+(define (render-food foodin imgin)
+  (let
+      ([x (posn-x (food-posn foodin))]
+       [y (posn-y (food-posn foodin))])
+    (place-image FOOD x y imgin)))
+
+
 ; world state -> image
 ; renders the whole world from a given world state
 (define (render-world worldin)
   (let*
       ([worm (world-worm worldin)]
        [food (world-food worldin)])
-    (render-worm worm)))
+    (render-food food (render-worm worm))))
 
 
 ; list -> list
@@ -230,6 +238,37 @@
   (if (equal? p candidate) (food-create p) candidate))
 
       
+; worm, food -> boolean
+; Checks to see if the worm's head has met the food
+(define (hit-food? worm food)
+  (let*
+      ([head (first worm)]
+       [food-x (posn-x (food-posn food))]
+       [food-y (posn-y (food-posn food))])
+    (check-segment-posn head food-x food-y)))
+
+
+; worm -> worm
+; Adds a segment to the end of the worm
+(define (add-segment worm)
+  (let*
+      ([end (first (reverse worm))]
+       [end-x (posn-x (segment-posn end))]
+       [end-y (posn-y (segment-posn end))]
+       [end-dir (segment-direction end)]
+       [radius (/ 2 CELL-DIAMETER)])
+    (cond
+      [(= end-dir "right") (cons worm (make-segment (make-posn (+ end-x radius) end-y) end-dir))]
+      [(= end-dir "left") (cons worm (make-segment (make-posn (- end-x radius) end-y) end-dir))]
+      [(= end-dir "down") (cons worm (make-segment (make-posn end-x (+ end-y radius)) end-dir))]
+      [(= end-dir "up") (cons worm (make-segment (make-posn end-x (- end-y radius)) end-dir))])))
+
+
+(define (feed-worm worldin)
+  (let*
+      ([worm (world-worm worldin)]
+       [food (world-food worldin)])
+    (if (hit-food? worm food)
 ; Create the world
 (big-bang TEST-STATE-1
           (on-tick update-world TICK-INTERVAL)
@@ -239,6 +278,10 @@
 
 
 ; TO DO (IN THIS ORDER)
-; GET COLLISION DETECTION WORKING
+; Food generation
+;  -generation of locations (DONE)
+;  -rendering of food (DONE)
+;  -collision with food
+;  -growing the worm
 ; GET ϟƘƦƖןןΣ✘
 ; ALSO USE GITHUB SO YOU DON'T END UP REDOING EVERYTHING AGAIN
