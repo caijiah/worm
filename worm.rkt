@@ -18,11 +18,11 @@
 
 ; NUMERICAL CONSTANTS
 
-(define GRID-SIZE 20)
-(define CELL-DIAMETER 40)
+(define GRID-SIZE 40)
+(define CELL-DIAMETER 20)
 (define WORLD-SIZE (* GRID-SIZE CELL-DIAMETER))
 (define CENTER (/ WORLD-SIZE 2))
-(define TICK-INTERVAL 0.2)
+(define TICK-INTERVAL 0.075)
 
 ;------------------------------------------------------------------
 
@@ -44,7 +44,7 @@
 ;-------------------------------------------------------------------
 
 ; INITIAL GAME STATE
-(define INITIAL-STATE (make-world (make-food (make-posn 20 20))
+(define INITIAL-STATE (make-world (make-food (make-posn 140 140))
                                   (list (make-segment (make-posn CENTER CENTER) "down"))))
 
 ; TEST GAME STATES
@@ -149,7 +149,7 @@
   (let*
     ([worm (world-worm worldin)]
      [food (world-food worldin)])
-  (make-world food (update-worm worm))))
+  (feed-worm (make-world food (update-worm worm)))))
 
 
 ; segment -> segment
@@ -188,8 +188,8 @@
       ([worm (world-worm gamein)]
        [worm-head (first worm)]
        [worm-tail (rest worm)]
-       [x (posn-x (segment-posn (first worm)))]
-       [y (posn-y (segment-posn (first worm)))])
+       [x (posn-x (segment-posn (first worm )))]
+       [y (posn-y (segment-posn (first worm )))])
     (cond
       [(>= x WORLD-SIZE) true]
       [(<= x 0) true]
@@ -224,11 +224,25 @@
   
 
 ; Posn -> Posn
-; Given a position, it generates a random, different position. 
+; Given a position, it generates a random, different position.
 (define (food-create p)
-  (food-check-create p (make-posn (* (random GRID-SIZE) CELL-DIAMETER) 
-                                  (* (random GRID-SIZE) CELL-DIAMETER))))
+  (food-check-create p (check-food-posn (make-posn (* (random GRID-SIZE) CELL-DIAMETER) 
+                                  (* (random GRID-SIZE) CELL-DIAMETER)))))
  
+
+; Posn -> posn
+; Ensures that the food doesn't end up on the edge of the world.
+(define (check-food-posn posnin)
+  (let*
+      ([x (posn-x posnin)]
+       [y (posn-y posnin)])
+    (cond
+      [(= x 0) (make-posn CELL-DIAMETER y)]
+      [(= y 0) (make-posn x CELL-DIAMETER) ]
+      [(= y (* CELL-DIAMETER GRID-SIZE)) (make-posn x (- (* CELL-DIAMETER GRID-SIZE) CELL-DIAMETER))]
+      [(= x (* CELL-DIAMETER GRID-SIZE)) (make-posn y (- (* CELL-DIAMETER GRID-SIZE) CELL-DIAMETER))]
+      [else posnin])))
+
 
 ; Posn Posn -> Posn
 ; Determines whether the old position is equal to the
@@ -258,19 +272,23 @@
        [end-dir (segment-direction end)]
        [radius (/ 2 CELL-DIAMETER)])
     (cond
-      [(= end-dir "right") (cons worm (make-segment (make-posn (+ end-x radius) end-y) end-dir))]
-      [(= end-dir "left") (cons worm (make-segment (make-posn (- end-x radius) end-y) end-dir))]
-      [(= end-dir "down") (cons worm (make-segment (make-posn end-x (+ end-y radius)) end-dir))]
-      [(= end-dir "up") (cons worm (make-segment (make-posn end-x (- end-y radius)) end-dir))])))
+      [(string=? end-dir "right") (append worm (cons (make-segment (make-posn (+ end-x radius) end-y) end-dir) empty))]
+      [(string=? end-dir "left") (append worm (cons (make-segment (make-posn (- end-x radius) end-y) end-dir) empty))]
+      [(string=? end-dir "down") (append worm (cons (make-segment (make-posn end-x (+ end-y radius)) end-dir) empty))]
+      [(string=? end-dir "up") (append worm (cons (make-segment (make-posn end-x (- end-y radius)) end-dir) empty))])))
 
 
+; world state -> world state
+; makes the worm eat, grow, and then generates a new food position
 (define (feed-worm worldin)
   (let*
       ([worm (world-worm worldin)]
-       [food (world-food worldin)])
-    (if (hit-food? worm food)
+       [food (world-food worldin)]
+       [food-pos (food-posn food)])
+    (if (hit-food? worm food) (make-world (make-food (food-create food-pos)) (add-segment worm)) worldin)))
+        
 ; Create the world
-(big-bang TEST-STATE-1
+(big-bang INITIAL-STATE
           (on-tick update-world TICK-INTERVAL)
           (on-key check-keys)
           (to-draw render-world)
